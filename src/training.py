@@ -6,16 +6,13 @@ import numpy as np
 import tensorflow as tf
 from keras import Model
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.layers import Flatten, Dense
+from tensorflow import keras
+from tensorflow.keras.layers import Flatten
 from keras import backend as K
 
 
-@tf.function
-def customed_activation(y):
-    if K.greater(y, 0.5):
-        return 1
-    else:
-        return 0
+def activation(y):
+    return keras.backend.switch(y > 0.5, K.maximum(y, 1), K.minimum(y, 0))
 
 
 def CNN(in_shape, out_shape):
@@ -41,6 +38,7 @@ def CNN(in_shape, out_shape):
     X = tf.keras.layers.Flatten()(X)
     X = tf.keras.layers.Dense(out_shape[0]*out_shape[1], activation='sigmoid', name='fc')(X)
     X = tf.keras.layers.Reshape(out_shape)(X)
+    x = tf.keras.layers.Lambda(activation)(X)
 
     m = tf.keras.Model(inputs=X_input, outputs=X)
 
@@ -60,17 +58,15 @@ for label_path in images_path:
     img = cv.imread(label_path, cv.CV_8UC4)
     _, c2, c3, c4 = cv.split(img)
     img = cv.merge((c2, c3, c4))
-    img_resized = cv.resize(img, (32, 64))
-    dataset.append(img_resized)
+    # img_resized = cv.resize(img, (128, 64))
+    dataset.append(img)
 dataset = np.array(dataset)
 
 for label_path in masks_path:
     mask = cv.imread(label_path, cv.CV_8UC1)
-    mask_resized = cv.resize(mask, (32, 64))
-    for i in range(mask_resized.shape[0]):
-        for j in range(mask_resized.shape[1]):
-            mask_resized[i, j] = mask_resized[i, j]/255
-    masks.append(mask_resized)
+    mask = mask/255
+    mask_resized = cv.resize(mask, (128, 256))
+    masks.append(mask)
 masks = np.array(masks)
 
 input_shape = dataset[0].shape
@@ -88,34 +84,34 @@ num_epochs = 20
 
 # print("CNN ----------------")
 # model = CNN(input_shape, output_shape)
-# model.compile(optimizer="adam", loss='mse', metrics=[tf.keras.metrics.MeanIoU(num_classes=2)])
+
+# # print("VGG ----------------")
+# vgg = tf.keras.applications.VGG19(input_shape=input_shape, include_top=False, weights='imagenet')
+# x = Flatten()(vgg.output)
+# x = tf.keras.layers.Dense(output_shape[0]*output_shape[1], activation='sigmoid', name='fc')(x)
+# x = tf.keras.layers.Reshape(output_shape)(x)
+# x = tf.keras.layers.Lambda(activation)(x)
+# model = Model(vgg.input, x)
+
+print("Inception ----------------")
+vgg = tf.keras.applications.InceptionResNetV2(input_shape=input_shape, include_top=False)
+x = Flatten()(vgg.output)
+x = tf.keras.layers.Dense(output_shape[0]*output_shape[1], activation='sigmoid', name='fc')(x)
+x = tf.keras.layers.Reshape(output_shape)(x)
+x = tf.keras.layers.Lambda(activation)(x)
+model = Model(vgg.input, x)
+
+# model.compile(optimizer="adam", loss='binary_crossentropy', metrics=[tf.keras.metrics.MeanIoU(num_classes=2)])
 #
 # history = model.fit(x=train_dataset, y=train_labels, validation_data=(val_dataset, val_labels), epochs=num_epochs,
 #                     callbacks=[early_stop_callback])
 #
-# model.save('data/models/CNN.h5')
+# model.save('data/models/model.h5')
 
-vgg = tf.keras.applications.VGG16(input_shape=input_shape, include_top=False, weights='imagenet')
-x = Flatten()(vgg.output)
-x = tf.keras.layers.Dense(output_shape[0]*output_shape[1], activation='sigmoid', name='fc')(x)
-x = tf.keras.layers.Reshape(output_shape)(x)
-x = tf.keras.layers.Activation(customed_activation)(x)
-model = Model(vgg.input, x)
-print(vgg.summary())
-print(model.summary())
-
-model.compile(optimizer="sgd", loss='binary_crossentropy', metrics=[tf.keras.metrics.MeanIoU(num_classes=2)])
-
-history = model.fit(x=train_dataset, y=train_labels, validation_data=(val_dataset, val_labels), epochs=num_epochs,
-                    callbacks=[early_stop_callback])
-
-model.save('data/models/VGG16.h5')
-
-pred = model.predict(dataset[0:1])
-print(pred)
-print(pred.shape)
+pred = model.predict(dataset[9:10])
 plt.imshow(pred[0])
 plt.show()
 
-plt.imshow(masks[0])
+print(masks[9])
+plt.imshow(masks[9])
 plt.show()
