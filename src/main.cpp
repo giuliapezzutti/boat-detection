@@ -24,7 +24,7 @@ int main(int argc, char** argv){
 
         String path_image = path_images[i];
         Mat img = imread(path_image);
-        resize(img, img, Size(512, 256));
+        resize(img, img, Size(128, 64));
         cvtColor(img, img, COLOR_BGR2HSV);
 
         vector<string> split_results = split(path_image, '.');
@@ -76,6 +76,18 @@ int main(int argc, char** argv){
 //            waitKey();
         }
 
+        vector<Mat> channels, dest;
+        split(img, channels);
+        Ptr<CLAHE> clahe = createCLAHE();
+        clahe->setClipLimit(4);
+
+        for(j=0; j<channels.size(); j++) {
+            Mat out;
+            clahe->apply(channels[j], out);
+            dest.push_back(out);
+        }
+        merge(dest, img);
+
         Mat filtered, edges;
         GaussianBlur(img, filtered, Size(3, 3), 1);
         Canny(filtered, edges, 200, 50);
@@ -86,10 +98,10 @@ int main(int argc, char** argv){
 //        waitKey();
 
         Mat output(img.size(), CV_8UC4);
-        vector<Mat> channels;
-        channels.push_back(img);
-        channels.push_back(edges);
-        merge(channels, output);
+        vector<Mat> chan;
+        chan.push_back(img);
+        chan.push_back(edges);
+        merge(chan, output);
 
 //        imshow("total", output);
 //        waitKey();
