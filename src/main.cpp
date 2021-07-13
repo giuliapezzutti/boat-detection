@@ -24,7 +24,24 @@ int main(int argc, char** argv){
 
         String path_image = path_images[i];
         Mat img = imread(path_image);
-        resize(img, img, Size(128, 64));
+        int dim_max = max(img.rows, img.cols);
+        Mat square_img = Mat(Size(dim_max, dim_max), CV_8UC3);
+        int top = 0;
+        int bottom = 0;
+        int left = 0;
+        int right = 0;
+        if (img.rows < dim_max){
+            bottom = ceil((double)(dim_max-img.rows)/2);
+            top = floor((double)(dim_max-img.rows)/2);
+        }
+        else if (img.cols < dim_max) {
+            right = ceil((double)(dim_max-img.cols)/2);
+            left = floor((double)(dim_max-img.cols)/2);
+        }
+
+        copyMakeBorder(img, square_img, top, bottom, left, right, BORDER_CONSTANT, Scalar(0));
+
+//        resize(img, img, Size(128, 64));
         cvtColor(img, img, COLOR_BGR2HSV);
 
         vector<string> split_results = split(path_image, '.');
@@ -37,6 +54,7 @@ int main(int argc, char** argv){
         bool file_exists = access(path_label.c_str(), 0) == 0;
         String x;
         Mat mask = Mat(img.size(), CV_8UC1, Scalar(0));
+        Mat square_mask = Mat(Size(dim_max, dim_max), CV_8UC1);
 
         if (file_exists) {
             ifstream inFile;
@@ -76,8 +94,10 @@ int main(int argc, char** argv){
 //            waitKey();
         }
 
+        copyMakeBorder(mask, square_mask, top, bottom, left, right, BORDER_CONSTANT, Scalar(0));
+
         vector<Mat> channels, dest;
-        split(img, channels);
+        split(square_img, channels);
         Ptr<CLAHE> clahe = createCLAHE();
         clahe->setClipLimit(4);
 
@@ -86,10 +106,10 @@ int main(int argc, char** argv){
             clahe->apply(channels[j], out);
             dest.push_back(out);
         }
-        merge(dest, img);
+        merge(dest, square_img);
 
         Mat filtered, edges;
-        GaussianBlur(img, filtered, Size(3, 3), 1);
+        GaussianBlur(square_img, filtered, Size(3, 3), 1);
         Canny(filtered, edges, 200, 50);
 
 //        imshow("Not Filtered", img);
@@ -97,9 +117,9 @@ int main(int argc, char** argv){
 //        imshow("Canny", edges);
 //        waitKey();
 
-        Mat output(img.size(), CV_8UC4);
+        Mat output(square_img.size(), CV_8UC4);
         vector<Mat> chan;
-        chan.push_back(img);
+        chan.push_back(square_img);
         chan.push_back(edges);
         merge(chan, output);
 
@@ -109,8 +129,11 @@ int main(int argc, char** argv){
         String output_path("data/training_dataset/processed_images/");
         String mask_path("data/training_dataset/masks/");
 
+        resize(output, output, Size(200, 200));
+        resize(square_mask, square_mask, Size(200, 200));
+
         imwrite(output_path+name_image+".png", output);
-        imwrite(mask_path+name_image+".png", mask);
+        imwrite(mask_path+name_image+".png", square_mask);
 
     }
 
