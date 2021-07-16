@@ -41,7 +41,6 @@ int main(int argc, char** argv){
 
         copyMakeBorder(img, square_img, top, bottom, left, right, BORDER_CONSTANT, Scalar(0));
 
-//        resize(img, img, Size(128, 64));
         cvtColor(img, img, COLOR_BGR2HSV);
 
         vector<string> split_results = split(path_image, '.');
