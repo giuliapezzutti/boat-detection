@@ -9,9 +9,10 @@
 using namespace std;
 using namespace cv;
 
-vector<string> split (const string &s, char delim);
+vector<string> split_filelines (const string &s, char delim);
 string extract_name_from_path (const string& path);
 string extract_folder_from_path (const string& path);
+void extract_squared_padding(Size current_dim, int desired_dim, int& top, int& bottom , int& left, int& right);
 void init(int argc, char *argv[], String &images_path, bool &train, bool &eval, bool &pred, String &masks_path);
 
 #endif

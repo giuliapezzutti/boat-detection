@@ -37,18 +37,31 @@ int main(int argc, char** argv) {
             mkdir(save_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     }
 
+    String mask_save_path = folder_masks + "/image_masks";
+    if (train or eval){
+        if (opendir(mask_save_path.c_str()) == nullptr)
+            mkdir(mask_save_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    }
+
     for (const auto& path : img_paths){
 
         string name_image = extract_name_from_path(path);
         Mat img = imread(path);
 
-        BoatDetector bd = BoatDetector(img, name_image);
+        BoatDetector bd = BoatDetector(img, name_image, Size(100, 100));
         Mat processed_img = bd.image_preprocessing();
 
-        if (train) {
-            String img_save_path = save_path + "/" + name_image + "_training.png";
-            imwrite(img_save_path, processed_img);
-        }
+        if (train or eval) {
 
+            String path_label = folder_masks + "/" + name_image + ".txt";
+            Mat mask = bd.mask_preprocessing(path_label);
+
+            if (train) {
+                String img_save = save_path + "/" + name_image + "_training.png";
+                imwrite(img_save, processed_img);
+                String mask_save = mask_save_path + "/" + name_image + "_mask.png";
+                imwrite(mask_save, mask);
+            }
+        }
     }
 }
