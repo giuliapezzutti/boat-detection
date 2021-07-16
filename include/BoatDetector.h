@@ -8,6 +8,8 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include <unistd.h>
+#include <opencv2/dnn/dnn.hpp>
+
 using namespace std;
 using namespace cv;
 
@@ -17,6 +19,7 @@ public:
     BoatDetector(Mat input_img, String img_name, Size dim);
     Mat image_preprocessing();
     Mat mask_preprocessing(const String& path_label);
+    void make_prediction(dnn::Net& net);
 
 protected:
     Mat img;

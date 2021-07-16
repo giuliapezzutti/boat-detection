@@ -16,7 +16,6 @@ BoatDetector::BoatDetector(Mat input_img, String img_name, Size dim){
     mask = Mat(init_dim, CV_8UC1, Scalar(0));
 }
 
-
 Mat BoatDetector::image_preprocessing() {
 
     Mat square_img = Mat(Size(dim_max, dim_max), CV_8UC3);
@@ -41,18 +40,17 @@ Mat BoatDetector::image_preprocessing() {
 
     Mat filtered, edges;
     GaussianBlur(square_img, filtered, Size(3, 3), 1);
-    Canny(filtered, edges, 200, 50);
 
-    Mat output(square_img.size(), CV_8UC4);
-    vector<Mat> chan;
-    chan.push_back(square_img);
-    chan.push_back(edges);
-    merge(chan, output);
+//    Canny(filtered, edges, 200, 50);
+//    Mat output(square_img.size(), CV_8UC3);
+//    vector<Mat> chan;
+//    chan.push_back(square_img);
+//    chan.push_back(edges);
+//    merge(chan, output);
 
-    resize(output, output, new_dim);
+    resize(filtered, filtered, new_dim);
 
-    img = output;
-
+    img = filtered;
     return img;
 }
 
@@ -74,8 +72,8 @@ Mat BoatDetector::mask_preprocessing(const String& path_label){
     }
 
     while (inFile >> x) {
-        vector<String> coordinates = split_filelines(x, ':');
-        coordinates = split_filelines(coordinates[1], ';');
+        vector<String> coordinates = split_line(x, ':');
+        coordinates = split_line(coordinates[1], ';');
 
         Point p1(stoi(coordinates[0]), stoi(coordinates[2]));
         Point p2(stoi(coordinates[0]), stoi(coordinates[3]));
@@ -98,4 +96,30 @@ Mat BoatDetector::mask_preprocessing(const String& path_label){
     resize(square_mask, mask, new_dim);
 
     return mask;
+}
+
+void BoatDetector::make_prediction(dnn::Net& net){
+
+//    vector<Mat> output;
+//    dnn::Model model ("model/vgg.pb");
+//    model.setInputSize(Size(new_dim));
+//    model.predict(img, output);
+
+    Mat blob;
+    dnn::blobFromImage(img, blob);
+    net.setInput(blob);
+    auto output = net.forward();
+
+    vector<float> out;
+
+    for (int j=0; j<output.size().width; j++){
+//        for (int k=0; j<output.size().height; k++) {
+            out.push_back(output.at<float>(0, j));
+        }
+
+    Mat out_matrix (Size(out.size(), 1), CV_32FC1, out.data());
+    cout << out_matrix.size() << endl;
+    imshow("Predicted", out_matrix);
+    waitKey(0);
+
 }

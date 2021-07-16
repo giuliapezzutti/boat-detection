@@ -4,6 +4,7 @@
 #include <opencv2/highgui.hpp>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <opencv2/dnn/dnn.hpp>
 #include "../include/functions.h"
 #include "../include/BoatDetector.h"
 
@@ -43,6 +44,12 @@ int main(int argc, char** argv) {
             mkdir(mask_save_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     }
 
+    dnn::Net net;
+    if (eval or pred){
+        String model_path = "model/boat.pb";
+        net = dnn::readNetFromTensorflow(model_path);
+    }
+
     for (const auto& path : img_paths){
 
         string name_image = extract_name_from_path(path);
@@ -63,5 +70,8 @@ int main(int argc, char** argv) {
                 imwrite(mask_save, mask);
             }
         }
+
+        bd.make_prediction(net);
+
     }
 }
