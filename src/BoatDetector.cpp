@@ -17,6 +17,9 @@ BoatDetector::BoatDetector(Mat input_img, String img_name, Size dim){
     new_dim = std::move(dim);
     processed_img = Mat(new_dim, CV_32FC3, Scalar(0));
     mask = Mat(init_dim, CV_8UC1, Scalar(0));
+    predicted_mask = Mat::zeros(new_dim, CV_8UC1);
+    contours = vector<vector<Point>>();
+    hierarchy = vector<Vec4i>();
 }
 
 Mat BoatDetector::image_preprocessing() {
@@ -90,7 +93,6 @@ Mat BoatDetector::mask_preprocessing(const String& path_label){
     inFile.close();
 
     int top, bottom, left, right;
-
     extract_squared_padding(init_dim, init_dim_max, top, bottom, left, right);
 
     Mat square_mask = Mat(Size(init_dim_max, init_dim_max), CV_8UC1);
@@ -142,17 +144,40 @@ void BoatDetector::prediction_processing(Mat pred_mask){
 
     pred_mask = pred_mask * 255;
 
-    vector<vector<Point>> contours;
-    vector<Vec4i> hierarchy;
     findContours(mask, contours, RETR_EXTERNAL,CHAIN_APPROX_SIMPLE);
 
-    Mat predicted_mask = Mat::zeros(new_dim, CV_8UC1);
-    Mat predicted_detection = processed_img.clone();
+//    predicted_mask = processed_img.clone();
 
     Scalar color = Scalar(rng.uniform(0, 256), rng.uniform(0, 256), rng.uniform(0, 256));
-    drawContours(predicted_detection, contours, -1, color, 2, LINE_8, hierarchy, 0);
     drawContours(predicted_mask, contours, -1, color, 2, LINE_8, hierarchy, 0);
+//    drawContours(predicted_detection, contours, -1, color, 2, LINE_8, hierarchy, 0);
 
-    imshow("Contours", predicted_detection);
+}
+
+void BoatDetector::apply_prediction_to_input(){
+
+    int top, bottom, left, right;
+    extract_squared_padding(init_dim, init_dim_max, top, bottom, left, right);
+
+    Mat initial_dim_predicted_mask;
+    resize(predicted_mask, initial_dim_predicted_mask, Size(init_dim_max, init_dim_max));
+    initial_dim_predicted_mask = initial_dim_predicted_mask(Range(top, init_dim_max-bottom), Range(left, init_dim_max-right));
+
+    cout << initial_dim_predicted_mask.size() << endl;
+    cout << img.size() << endl;
+
+    // --- da aggiungere questa maschera all'immagine iniziale
+
+    Mat square_img;
+    copyMakeBorder(img, square_img, top, bottom, left, right, BORDER_CONSTANT, Scalar(0));
+    resize(square_img, square_img, new_dim);
+
+    Scalar color = Scalar(rng.uniform(0, 256), rng.uniform(0, 256), rng.uniform(0, 256));
+    drawContours(square_img, contours, -1, color, 2, LINE_8, hierarchy, 0);
+
+    resize(square_img, square_img, Size(init_dim_max, init_dim_max));
+    Mat correct_size_prediction = square_img(Range(top, init_dim_max-bottom), Range(left, init_dim_max-right));
+
+    imshow("Contours", correct_size_prediction);
     waitKey(0);
 }

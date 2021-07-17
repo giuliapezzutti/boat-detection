@@ -21,6 +21,7 @@ public:
     Mat mask_preprocessing(const String& path_label);
     Mat make_prediction(dnn::Net& net);
     void prediction_processing(Mat pred_mask);
+    void apply_prediction_to_input();
 
 protected:
     Mat img;
@@ -30,7 +31,9 @@ protected:
     int init_dim_max;
     Size new_dim;
     Mat mask;
+    Mat predicted_mask;
+    vector<vector<Point>> contours;
+    vector<Vec4i> hierarchy;
 };
-
 
 #endif

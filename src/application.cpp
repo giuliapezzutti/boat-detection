@@ -73,6 +73,7 @@ int main(int argc, char** argv) {
         if (eval or pred) {
             Mat predicted_mask = bd.make_prediction(net);
             bd.prediction_processing(predicted_mask);
+            bd.apply_prediction_to_input();
         }
     }
 }
