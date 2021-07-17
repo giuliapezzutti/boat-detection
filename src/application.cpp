@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
 
     dnn::Net net;
     if (eval or pred){
-        String model_path = "model/boat.pb";
+        String model_path = "model/vggboat.pb";
         net = dnn::readNetFromTensorflow(model_path);
     }
 

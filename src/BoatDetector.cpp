@@ -11,17 +11,18 @@ BoatDetector::BoatDetector(Mat input_img, String img_name, Size dim){
     img = std::move(input_img);
     name = std::move(img_name);
     init_dim = img.size();
-    dim_max = max(init_dim.height, init_dim.width);
+    init_dim_max = max(init_dim.height, init_dim.width);
     new_dim = std::move(dim);
+    processed_img = Mat(new_dim, CV_32FC3, Scalar(0));
     mask = Mat(init_dim, CV_8UC1, Scalar(0));
 }
 
 Mat BoatDetector::image_preprocessing() {
 
-    Mat square_img = Mat(Size(dim_max, dim_max), CV_8UC3);
+    Mat square_img = Mat(Size(init_dim_max, init_dim_max), CV_8UC3);
     int top, bottom, left, right;
 
-    extract_squared_padding(init_dim, dim_max, top, bottom, left, right);
+    extract_squared_padding(init_dim, init_dim_max, top, bottom, left, right);
 
     copyMakeBorder(img, square_img, top, bottom, left, right, BORDER_CONSTANT, Scalar(0));
     cvtColor(square_img, square_img, COLOR_BGR2HSV);
@@ -50,8 +51,8 @@ Mat BoatDetector::image_preprocessing() {
 
     resize(filtered, filtered, new_dim);
 
-    img = filtered;
-    return img;
+    processed_img = filtered;
+    return processed_img;
 }
 
 Mat BoatDetector::mask_preprocessing(const String& path_label){
@@ -88,9 +89,9 @@ Mat BoatDetector::mask_preprocessing(const String& path_label){
 
     int top, bottom, left, right;
 
-    extract_squared_padding(init_dim, dim_max, top, bottom, left, right);
+    extract_squared_padding(init_dim, init_dim_max, top, bottom, left, right);
 
-    Mat square_mask = Mat(Size(dim_max, dim_max), CV_8UC1);
+    Mat square_mask = Mat(Size(init_dim_max, init_dim_max), CV_8UC1);
 
     copyMakeBorder(mask, square_mask, top, bottom, left, right, BORDER_CONSTANT, Scalar(0));
     resize(square_mask, mask, new_dim);
@@ -105,17 +106,26 @@ void BoatDetector::make_prediction(dnn::Net& net){
 //    model.setInputSize(Size(new_dim));
 //    model.predict(img, output);
 
+    auto layers = net.getLayerNames();
+    for (auto layer : layers)
+        cout << layer << endl;
+
     Mat blob;
-    dnn::blobFromImage(img, blob);
+    dnn::blobFromImage(processed_img, blob, 1.0, Size(new_dim), 0);
     net.setInput(blob);
     auto output = net.forward();
+    Mat predicted;
+    dnn::imagesFromBlob(output, predicted);
 
+    cout << output.size() << endl;
+    cout << predicted.size() << endl;
+    exit(1);
     vector<float> out;
 
     for (int j=0; j<output.size().width; j++){
 //        for (int k=0; j<output.size().height; k++) {
-            out.push_back(output.at<float>(0, j));
-        }
+        out.push_back(output.at<float>(0, j));
+    }
 
     Mat out_matrix (Size(out.size(), 1), CV_32FC1, out.data());
     cout << out_matrix.size() << endl;

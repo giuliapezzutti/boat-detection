@@ -23,9 +23,10 @@ public:
 
 protected:
     Mat img;
+    Mat processed_img;
     String name;
     Size init_dim;
-    int dim_max;
+    int init_dim_max;
     Size new_dim;
     Mat mask;
 };
