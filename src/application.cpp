@@ -1,4 +1,3 @@
-#include <fstream>
 #include <iostream>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
@@ -46,7 +45,7 @@ int main(int argc, char** argv) {
 
     dnn::Net net;
     if (eval or pred){
-        String model_path = "model/vggboat.pb";
+        String model_path = "model/mobilenet-nottrained.pb";
         net = dnn::readNetFromTensorflow(model_path);
     }
 
@@ -55,7 +54,7 @@ int main(int argc, char** argv) {
         string name_image = extract_name_from_path(path);
         Mat img = imread(path);
 
-        BoatDetector bd = BoatDetector(img, name_image, Size(100, 100));
+        BoatDetector bd = BoatDetector(img, name_image, Size(224, 224));
         Mat processed_img = bd.image_preprocessing();
 
         if (train or eval) {
@@ -71,7 +70,9 @@ int main(int argc, char** argv) {
             }
         }
 
-        bd.make_prediction(net);
-
+        if (eval or pred) {
+            Mat predicted_mask = bd.make_prediction(net);
+            bd.prediction_processing(predicted_mask);
+        }
     }
 }

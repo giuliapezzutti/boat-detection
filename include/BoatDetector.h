@@ -19,7 +19,8 @@ public:
     BoatDetector(Mat input_img, String img_name, Size dim);
     Mat image_preprocessing();
     Mat mask_preprocessing(const String& path_label);
-    void make_prediction(dnn::Net& net);
+    Mat make_prediction(dnn::Net& net);
+    void prediction_processing(Mat pred_mask);
 
 protected:
     Mat img;

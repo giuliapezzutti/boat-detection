@@ -7,6 +7,8 @@
 #include "../include/functions.h"
 #include <utility>
 
+RNG rng(12345);
+
 BoatDetector::BoatDetector(Mat input_img, String img_name, Size dim){
     img = std::move(input_img);
     name = std::move(img_name);
@@ -99,37 +101,58 @@ Mat BoatDetector::mask_preprocessing(const String& path_label){
     return mask;
 }
 
-void BoatDetector::make_prediction(dnn::Net& net){
-
-//    vector<Mat> output;
-//    dnn::Model model ("model/vgg.pb");
-//    model.setInputSize(Size(new_dim));
-//    model.predict(img, output);
-
-    auto layers = net.getLayerNames();
-    for (auto layer : layers)
-        cout << layer << endl;
+Mat BoatDetector::make_prediction(dnn::Net& net){
 
     Mat blob;
-    dnn::blobFromImage(processed_img, blob, 1.0, Size(new_dim), 0);
+    vector<float> out;
+    Mat out_matrix (Size(new_dim), CV_16FC1);
+
+    auto layers = net.getLayerNames();
+
+    dnn::blobFromImage(processed_img, blob, 1.0, new_dim, 0);
     net.setInput(blob);
     auto output = net.forward();
-    Mat predicted;
-    dnn::imagesFromBlob(output, predicted);
-
-    cout << output.size() << endl;
-    cout << predicted.size() << endl;
-    exit(1);
-    vector<float> out;
 
     for (int j=0; j<output.size().width; j++){
-//        for (int k=0; j<output.size().height; k++) {
         out.push_back(output.at<float>(0, j));
     }
 
-    Mat out_matrix (Size(out.size(), 1), CV_32FC1, out.data());
+    resize(out, out_matrix, new_dim);
     cout << out_matrix.size() << endl;
-    imshow("Predicted", out_matrix);
-    waitKey(0);
 
+//    for (int j=0; j<out_matrix.size().width; j++)
+//        for (int k=0; k<out_matrix.size().height; k++) {
+//            cout << out_matrix.at<float>(k, j) << endl;
+//    }
+//
+//    imshow("Predicted", out_matrix);
+//    waitKey(0);
+
+    return out_matrix;
+}
+
+void BoatDetector::prediction_processing(Mat pred_mask){
+
+    for (int j=0; j<pred_mask.size().width; j++)
+        for (int k=0; k<pred_mask.size().height; k++)
+            if (pred_mask.at<float>(k, j) < 0.5)
+                pred_mask.at<float>(k, j) = 0;
+            else
+                pred_mask.at<float>(k, j) = 1;
+
+    pred_mask = pred_mask * 255;
+
+    vector<vector<Point>> contours;
+    vector<Vec4i> hierarchy;
+    findContours(mask, contours, RETR_EXTERNAL,CHAIN_APPROX_SIMPLE);
+
+    Mat predicted_mask = Mat::zeros(new_dim, CV_8UC1);
+    Mat predicted_detection = processed_img.clone();
+
+    Scalar color = Scalar(rng.uniform(0, 256), rng.uniform(0, 256), rng.uniform(0, 256));
+    drawContours(predicted_detection, contours, -1, color, 2, LINE_8, hierarchy, 0);
+    drawContours(predicted_mask, contours, -1, color, 2, LINE_8, hierarchy, 0);
+
+    imshow("Contours", predicted_detection);
+    waitKey(0);
 }
