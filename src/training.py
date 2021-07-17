@@ -7,7 +7,6 @@ import tensorflow as tf
 from keras import Model
 from sklearn.model_selection import train_test_split
 from tensorflow import keras
-from tensorflow.keras.layers import Flatten
 from keras import backend as K
 
 
@@ -43,7 +42,6 @@ def CNN(in_shape, out_shape):
     m = tf.keras.Model(inputs=X_input, outputs=X)
 
     return m
-
 
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 folder = "data/training_dataset/processed_images/"

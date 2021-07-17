@@ -144,7 +144,7 @@ void BoatDetector::prediction_processing(Mat pred_mask){
 
     pred_mask = pred_mask * 255;
 
-    findContours(mask, contours, RETR_EXTERNAL,CHAIN_APPROX_SIMPLE);
+    findContours(mask, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
 
 //    predicted_mask = processed_img.clone();
 
