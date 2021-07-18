@@ -31,7 +31,11 @@ void init(int argc, char *argv[], String &images_path, bool &train, bool &eval, 
         cerr << "Only one task can be performed at time!";
         exit(1);
     }
-
+   
+    if (!parser.has("training") and !parser.has("evaluation") and !parser.has("predict")){
+        cerr << "You must provide one task to be performed!";
+        exit(1);
+    }
 
     images_path = parser.get<String>("@images");
     if (images_path.empty()){
