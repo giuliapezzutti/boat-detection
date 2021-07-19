@@ -81,7 +81,8 @@ string extract_name_from_path (const string& path){
     string without_extension = split_results[0];
     split_results = split_line(without_extension, '/');
     string name_image = split_results[split_results.size()-1];
-    return name_image;
+    split_results = split_line(name_image, '_');
+    return split_results[0];
 }
 
 string extract_folder_from_path (const string& path){

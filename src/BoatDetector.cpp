@@ -15,7 +15,7 @@ BoatDetector::BoatDetector(Mat input_img, String img_name, Size dim){
     init_dim = img.size();
     init_dim_max = max(init_dim.height, init_dim.width);
     new_dim = std::move(dim);
-    processed_img = Mat(new_dim, CV_32FC3, Scalar(0));
+    processed_img = Mat(new_dim, CV_32FC4, Scalar(0));
     mask = Mat(init_dim, CV_8UC1, Scalar(0));
     predicted_mask = Mat::zeros(new_dim, CV_8UC1);
     contours = vector<vector<Point>>();
@@ -24,7 +24,7 @@ BoatDetector::BoatDetector(Mat input_img, String img_name, Size dim){
 
 Mat BoatDetector::image_preprocessing() {
 
-    Mat square_img = Mat(Size(init_dim_max, init_dim_max), CV_8UC3);
+    Mat square_img = Mat(Size(init_dim_max, init_dim_max), CV_32FC4);
     int top, bottom, left, right;
 
     extract_squared_padding(init_dim, init_dim_max, top, bottom, left, right);
@@ -45,7 +45,7 @@ Mat BoatDetector::image_preprocessing() {
     merge(dest, square_img);
 
     Mat filtered, edges;
-    GaussianBlur(square_img, filtered, Size(3, 3), 1);
+//    GaussianBlur(square_img, filtered, Size(3, 3), 1);
 
 //    Canny(filtered, edges, 200, 50);
 //    Mat output(square_img.size(), CV_8UC3);
@@ -54,9 +54,9 @@ Mat BoatDetector::image_preprocessing() {
 //    chan.push_back(edges);
 //    merge(chan, output);
 
-    resize(filtered, filtered, new_dim);
+    resize(square_img, square_img, new_dim);
 
-    processed_img = filtered;
+    processed_img = square_img;
     return processed_img;
 }
 
@@ -105,12 +105,15 @@ Mat BoatDetector::mask_preprocessing(const String& path_label){
 
 Mat BoatDetector::make_prediction(dnn::Net& net){
 
-    Mat blob;
     vector<float> out;
-    Mat out_matrix (Size(new_dim), CV_16FC1);
+    Mat out_matrix (Size(new_dim), CV_32FC1);
 
     auto layers = net.getLayerNames();
+//    for(auto layer : layers)
+//        cout << layer << endl;
 
+    int sz[] = {1, new_dim.height, new_dim.width, 3};
+    Mat blob(4, sz, CV_32F, processed_img.data);
     dnn::blobFromImage(processed_img, blob, 1.0, new_dim, 0);
     net.setInput(blob);
     auto output = net.forward();
@@ -120,15 +123,6 @@ Mat BoatDetector::make_prediction(dnn::Net& net){
     }
 
     resize(out, out_matrix, new_dim);
-    cout << out_matrix.size() << endl;
-
-//    for (int j=0; j<out_matrix.size().width; j++)
-//        for (int k=0; k<out_matrix.size().height; k++) {
-//            cout << out_matrix.at<float>(k, j) << endl;
-//    }
-
-//    imshow("Predicted", out_matrix);
-//    waitKey(0);
 
     return out_matrix;
 }
@@ -144,12 +138,10 @@ void BoatDetector::prediction_processing(Mat pred_mask){
             else
                 final_mask.at<u_char>(k, j) = 255;
 
-//    pred_mask = pred_mask * 255;
     imshow("pred_mask", pred_mask);
     waitKey(0);
 
     findContours(final_mask, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
-
 //    predicted_mask = processed_img.clone();
 
     Scalar color = Scalar(rng.uniform(0, 256), rng.uniform(0, 256), rng.uniform(0, 256));
@@ -169,21 +161,21 @@ void BoatDetector::apply_prediction_to_input(){
     resize(predicted_mask, initial_dim_predicted_mask, Size(init_dim_max, init_dim_max));
     initial_dim_predicted_mask = initial_dim_predicted_mask(Range(top, init_dim_max-bottom), Range(left, init_dim_max-right));
 
-    cout << initial_dim_predicted_mask.size() << endl;
-    cout << img.size() << endl;
-
-    // --- da aggiungere questa maschera all'immagine iniziale
-
-    Mat square_img;
-    copyMakeBorder(img, square_img, top, bottom, left, right, BORDER_CONSTANT, Scalar(0));
-    resize(square_img, square_img, new_dim);
-
-    Scalar color = Scalar(rng.uniform(0, 256), rng.uniform(0, 256), rng.uniform(0, 256));
-    drawContours(square_img, contours, -1, color, 2, LINE_8, hierarchy, 0);
-
-    resize(square_img, square_img, Size(init_dim_max, init_dim_max));
-    Mat correct_size_prediction = square_img(Range(top, init_dim_max-bottom), Range(left, init_dim_max-right));
-
-    imshow("Contours", correct_size_prediction);
+    imshow("Contours", initial_dim_predicted_mask);
     waitKey(0);
+
+    vector<Mat> three;
+    three.push_back(initial_dim_predicted_mask);
+    three.push_back(initial_dim_predicted_mask);
+    three.push_back(initial_dim_predicted_mask);
+    Mat three_channels_initial_dim_predicted_mask;
+    merge(three, three_channels_initial_dim_predicted_mask);
+
+    Mat prova = img.clone();
+
+    add(three_channels_initial_dim_predicted_mask, img, prova);
+
+    imshow("prova", prova);
+    waitKey(0);
+
 }

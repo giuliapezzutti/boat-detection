@@ -12,4 +12,6 @@ _deps
 
 .idea
 cmake-build-debug
-model/
+models/
+data/TEST_DATASET
+data/TRAINING_DATASET
