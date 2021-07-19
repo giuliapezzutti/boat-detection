@@ -4,10 +4,8 @@ import cv2 as cv
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
-from keras import Model
 from sklearn.model_selection import train_test_split
 from tensorflow import keras
-from keras import backend as K
 
 
 def CNN(in_shape):
@@ -35,8 +33,8 @@ def CNN(in_shape):
     return m
 
 
-folder = "../data/training_dataset/processed_images/"
-mask_folder = "../data/training_dataset/masks/"
+folder = "../data/training_images/"
+mask_folder = "../data/image_masks/"
 
 images_path = sorted(glob(folder + "*.png"))
 masks_path = sorted(glob(mask_folder + "*.png"))
@@ -68,8 +66,8 @@ print('Number of images: ', len(dataset))
 
 train_dataset, val_dataset, train_labels, val_labels = train_test_split(dataset, masks, train_size=0.7, random_state=1)
 
-early_stop_callback = [tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5),
-                       keras.callbacks.ModelCheckpoint("../models/model-checkpoint.h5", save_best_only=True)]
+callbacks = [tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5),
+             keras.callbacks.ModelCheckpoint("../models/model-checkpoint.h5", save_best_only=True)]
 batch_size = 64
 num_epochs = 20
 
@@ -80,7 +78,7 @@ model.compile(optimizer="adam", loss='mse', metrics=[tf.keras.metrics.MeanIoU(nu
 model.summary()
 
 history = model.fit(x=train_dataset, y=train_labels, validation_data=(val_dataset, val_labels), epochs=num_epochs,
-                    callbacks=[early_stop_callback])
+                    callbacks=callbacks)
 
 model.save('../models/model.h5')
 
