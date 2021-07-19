@@ -35,8 +35,8 @@ def CNN(in_shape):
     return m
 
 
-folder = "data/training_dataset/processed_images/"
-mask_folder = "data/training_dataset/masks/"
+folder = "../data/training_dataset/processed_images/"
+mask_folder = "../data/training_dataset/masks/"
 
 images_path = sorted(glob(folder + "*.png"))
 masks_path = sorted(glob(mask_folder + "*.png"))
@@ -68,7 +68,8 @@ print('Number of images: ', len(dataset))
 
 train_dataset, val_dataset, train_labels, val_labels = train_test_split(dataset, masks, train_size=0.7, random_state=1)
 
-early_stop_callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
+early_stop_callback = [tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5),
+                       keras.callbacks.ModelCheckpoint("../models/model-checkpoint.h5", save_best_only=True)]
 batch_size = 64
 num_epochs = 20
 
@@ -81,7 +82,7 @@ model.summary()
 history = model.fit(x=train_dataset, y=train_labels, validation_data=(val_dataset, val_labels), epochs=num_epochs,
                     callbacks=[early_stop_callback])
 
-model.save('models/model.h5')
+model.save('../models/model.h5')
 
 from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 
@@ -92,5 +93,5 @@ full_model = full_model.get_concrete_function(
 frozen_func = convert_variables_to_constants_v2(full_model)
 frozen_func.graph.as_graph_def()
 
-tf.io.write_graph(graph_or_graph_def=frozen_func.graph, logdir="models/", name="model.pb", as_text=False)
+tf.io.write_graph(graph_or_graph_def=frozen_func.graph, logdir="../models/", name="model.pb", as_text=False)
 # tf.io.write_graph(graph_or_graph_def=frozen_func.graph, logdir=path+"frozen_models", name="boat.pbtxt", as_text=True)
