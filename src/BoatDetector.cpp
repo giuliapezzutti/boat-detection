@@ -126,7 +126,7 @@ Mat BoatDetector::make_prediction(dnn::Net& net){
 //        for (int k=0; k<out_matrix.size().height; k++) {
 //            cout << out_matrix.at<float>(k, j) << endl;
 //    }
-//
+
 //    imshow("Predicted", out_matrix);
 //    waitKey(0);
 
@@ -135,16 +135,20 @@ Mat BoatDetector::make_prediction(dnn::Net& net){
 
 void BoatDetector::prediction_processing(Mat pred_mask){
 
+    Mat final_mask (new_dim, CV_8UC1);
+
     for (int j=0; j<pred_mask.size().width; j++)
         for (int k=0; k<pred_mask.size().height; k++)
-            if (pred_mask.at<float>(k, j) < 0.5)
-                pred_mask.at<float>(k, j) = 0;
+            if (pred_mask.at<float>(k, j) < 0.005)
+                final_mask.at<u_char>(k, j) = 0;
             else
-                pred_mask.at<float>(k, j) = 1;
+                final_mask.at<u_char>(k, j) = 255;
 
-    pred_mask = pred_mask * 255;
+//    pred_mask = pred_mask * 255;
+    imshow("pred_mask", pred_mask);
+    waitKey(0);
 
-    findContours(mask, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+    findContours(final_mask, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
 
 //    predicted_mask = processed_img.clone();
 
@@ -152,6 +156,8 @@ void BoatDetector::prediction_processing(Mat pred_mask){
     drawContours(predicted_mask, contours, -1, color, 2, LINE_8, hierarchy, 0);
 //    drawContours(predicted_detection, contours, -1, color, 2, LINE_8, hierarchy, 0);
 
+    imshow("Prediction", predicted_mask);
+    waitKey(0);
 }
 
 void BoatDetector::apply_prediction_to_input(){

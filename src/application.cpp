@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
 
     dnn::Net net;
     if (eval or pred){
-        String model_path = "model/mobilenet-nottrained.pb";
+        String model_path = "model/mobilenet-boat.pb";
         net = dnn::readNetFromTensorflow(model_path);
     }
 
