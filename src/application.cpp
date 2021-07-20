@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
 
     dnn::Net net;
     if (eval or pred){
-        String model_path = "models/vggboat.pb";
+        String model_path = "models/model.pb";
         net = dnn::readNetFromTensorflow(model_path);
     }
 
@@ -71,8 +71,8 @@ int main(int argc, char** argv) {
         }
 
         if (eval or pred) {
-            Mat predicted_mask = bd.make_prediction(net);
-            bd.prediction_processing(predicted_mask);
+            bd.make_prediction(net);
+            bd.prediction_processing();
             bd.apply_prediction_to_input();
         }
     }

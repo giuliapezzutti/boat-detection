@@ -14,10 +14,11 @@ BoatDetector::BoatDetector(Mat input_img, String img_name, Size dim){
     name = std::move(img_name);
     init_dim = img.size();
     init_dim_max = max(init_dim.height, init_dim.width);
-    new_dim = std::move(dim);
-    processed_img = Mat(new_dim, CV_32FC4, Scalar(0));
+    net_dim = std::move(dim);
+    processed_img = Mat(net_dim, CV_32FC4, Scalar(0));
     mask = Mat(init_dim, CV_8UC1, Scalar(0));
-    predicted_mask = Mat::zeros(new_dim, CV_8UC1);
+    predicted_mask = Mat::zeros(net_dim, CV_8UC1);
+    net_output = Mat(net_dim, CV_32FC1, Scalar(0));
     contours = vector<vector<Point>>();
     hierarchy = vector<Vec4i>();
 }
@@ -54,7 +55,7 @@ Mat BoatDetector::image_preprocessing() {
 //    chan.push_back(edges);
 //    merge(chan, output);
 
-    resize(square_img, square_img, new_dim);
+    resize(square_img, square_img, net_dim);
 
     processed_img = square_img;
     return processed_img;
@@ -98,55 +99,61 @@ Mat BoatDetector::mask_preprocessing(const String& path_label){
     Mat square_mask = Mat(Size(init_dim_max, init_dim_max), CV_8UC1);
 
     copyMakeBorder(mask, square_mask, top, bottom, left, right, BORDER_CONSTANT, Scalar(0));
-    resize(square_mask, mask, new_dim);
+    resize(square_mask, mask, net_dim);
 
     return mask;
 }
 
-Mat BoatDetector::make_prediction(dnn::Net& net){
-
-    vector<float> out;
-    Mat out_matrix (Size(new_dim), CV_32FC1);
+void BoatDetector::make_prediction(dnn::Net& net) {
 
     auto layers = net.getLayerNames();
-//    for(auto layer : layers)
-//        cout << layer << endl;
+    for (auto layer : layers)
+        cout << layer << endl;
 
-    int sz[] = {1, new_dim.height, new_dim.width, 3};
+    int sz[] = {1, net_dim.height, net_dim.width, 3};
     Mat blob(4, sz, CV_32F, processed_img.data);
-    dnn::blobFromImage(processed_img, blob, 1.0, new_dim, 0);
+    vector<Mat> output_img;
+
+    dnn::blobFromImage(processed_img, blob, 1.0, net_dim, 0);
     net.setInput(blob);
     auto output = net.forward();
+    dnn::imagesFromBlob(output, output_img);
 
-    for (int j=0; j<output.size().width; j++){
-        out.push_back(output.at<float>(0, j));
-    }
-
-    resize(out, out_matrix, new_dim);
-
-    return out_matrix;
+    output_img[0].copyTo(net_output);
 }
 
-void BoatDetector::prediction_processing(Mat pred_mask){
+void BoatDetector::prediction_processing() {
 
-    Mat final_mask (new_dim, CV_8UC1);
+    Mat final_mask (net_dim, CV_8UC1);
 
-    for (int j=0; j<pred_mask.size().width; j++)
-        for (int k=0; k<pred_mask.size().height; k++)
-            if (pred_mask.at<float>(k, j) < 0.005)
+    for (int j=0; j<net_output.size().width; j++)
+        for (int k=0; k<net_output.size().height; k++)
+            if (net_output.at<float>(k, j) < 0.4)
                 final_mask.at<u_char>(k, j) = 0;
             else
                 final_mask.at<u_char>(k, j) = 255;
 
-    imshow("pred_mask", pred_mask);
-    waitKey(0);
+//    imshow("net_output", net_output);
+//    imshow("thresholded mask", final_mask);
+//    waitKey(0);
 
-    findContours(final_mask, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
-//    predicted_mask = processed_img.clone();
+    Mat canny_output;
+    Canny(final_mask, canny_output, 200, 400);
 
-    Scalar color = Scalar(rng.uniform(0, 256), rng.uniform(0, 256), rng.uniform(0, 256));
-    drawContours(predicted_mask, contours, -1, color, 2, LINE_8, hierarchy, 0);
-//    drawContours(predicted_detection, contours, -1, color, 2, LINE_8, hierarchy, 0);
+    findContours(canny_output, contours, RETR_TREE, CHAIN_APPROX_SIMPLE);
+
+    vector<vector<Point> > contours_poly(contours.size());
+    vector<Rect> boundRect(contours.size());
+    for(size_t i = 0; i < contours.size(); i++){
+        approxPolyDP(contours[i],contours_poly[i],3,true);
+        boundRect[i] = boundingRect(contours_poly[i]);
+    }
+
+    Scalar color = Scalar(rng.uniform(0, 256), rng.uniform(0,256), rng.uniform(0,256));
+    for(size_t i = 0; i< contours.size(); i++){
+        drawContours(predicted_mask, contours_poly, (int)i, color);
+        rectangle(predicted_mask, boundRect[i].tl(), boundRect[i].br(), color, 1);
+    }
 
     imshow("Prediction", predicted_mask);
     waitKey(0);
@@ -161,7 +168,7 @@ void BoatDetector::apply_prediction_to_input(){
     resize(predicted_mask, initial_dim_predicted_mask, Size(init_dim_max, init_dim_max));
     initial_dim_predicted_mask = initial_dim_predicted_mask(Range(top, init_dim_max-bottom), Range(left, init_dim_max-right));
 
-    imshow("Contours", initial_dim_predicted_mask);
+    imshow("initial_dim_predicted_mask", initial_dim_predicted_mask);
     waitKey(0);
 
     vector<Mat> three;
@@ -171,11 +178,10 @@ void BoatDetector::apply_prediction_to_input(){
     Mat three_channels_initial_dim_predicted_mask;
     merge(three, three_channels_initial_dim_predicted_mask);
 
-    Mat prova = img.clone();
+    Mat img_masked = img.clone();
+    bitwise_and(img, three_channels_initial_dim_predicted_mask, img_masked);
 
-    add(three_channels_initial_dim_predicted_mask, img, prova);
-
-    imshow("prova", prova);
+    imshow("Masked image", img_masked);
     waitKey(0);
 
 }

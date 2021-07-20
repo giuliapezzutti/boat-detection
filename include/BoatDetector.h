@@ -19,8 +19,8 @@ public:
     BoatDetector(Mat input_img, String img_name, Size dim);
     Mat image_preprocessing();
     Mat mask_preprocessing(const String& path_label);
-    Mat make_prediction(dnn::Net& net);
-    void prediction_processing(Mat pred_mask);
+    void make_prediction(dnn::Net& net);
+    void prediction_processing();
     void apply_prediction_to_input();
 
 protected:
@@ -29,9 +29,10 @@ protected:
     String name;
     Size init_dim;
     int init_dim_max;
-    Size new_dim;
+    Size net_dim;
     Mat mask;
     Mat predicted_mask;
+    Mat net_output;
     vector<vector<Point>> contours;
     vector<Vec4i> hierarchy;
 };
