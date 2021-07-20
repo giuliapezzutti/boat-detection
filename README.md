@@ -47,5 +47,14 @@ Subsequently, it is necessary to create the whole pre-processed dataset. To do t
 mkdir build && cd build
 cmake ..
 make 
-./boat-detector <path image> -t --masks=<path masks>
+./boat-detection <images path> -t --masks=<masks path>
 ```
+
+Two new folders, respectively inside the images path and masks path, will be created with the correspondent saved files. The path to these 
+folders must now be passed to training.py in order to perform the neural network training. 
+
+```
+python src/training.py <new images path> <new masks path>
+```
+
+The trained network is then saved in models folder. it is possible now to run main.cpp file in prediction or evaluation modes, as presented above. 
