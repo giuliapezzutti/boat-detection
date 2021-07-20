@@ -10,34 +10,42 @@
 RNG rng(12345);
 
 BoatDetector::BoatDetector(Mat input_img, String img_name, Size dim){
+    /// Class constructor
     img = std::move(input_img);
     name = std::move(img_name);
+    
     init_dim = img.size();
     init_dim_max = max(init_dim.height, init_dim.width);
     net_dim = std::move(dim);
+    
     processed_img = Mat(net_dim, CV_32FC4, Scalar(0));
     mask = Mat(init_dim, CV_8UC1, Scalar(0));
-    predicted_mask = Mat::zeros(net_dim, CV_8UC1);
+    predicted_mask = Mat(net_dim, CV_8UC1, Scalar(0));
     net_output = Mat(net_dim, CV_32FC1, Scalar(0));
+    
     contours = vector<vector<Point>>();
     hierarchy = vector<Vec4i>();
 }
 
 Mat BoatDetector::image_preprocessing() {
+    /// Image preprocessing done at different steps
 
     Mat square_img = Mat(Size(init_dim_max, init_dim_max), CV_32FC4);
+    Mat filtered, edges;
     int top, bottom, left, right;
 
+    // Padding to create a square matrix
     extract_squared_padding(init_dim, init_dim_max, top, bottom, left, right);
-
     copyMakeBorder(img, square_img, top, bottom, left, right, BORDER_CONSTANT, Scalar(0));
+    
+    // Converto to HSV colour space
     cvtColor(square_img, square_img, COLOR_BGR2HSV);
 
+    // Equalize histograms for each channels thanks to CLAHE
     vector<Mat> channels, dest;
     split(square_img, channels);
     Ptr<CLAHE> clahe = createCLAHE();
     clahe->setClipLimit(4);
-
     for(auto & channel : channels) {
         Mat out;
         clahe->apply(channel, out);
@@ -45,10 +53,13 @@ Mat BoatDetector::image_preprocessing() {
     }
     merge(dest, square_img);
 
-    Mat filtered, edges;
+    // Noise removal throught Gaussian filtering 
     GaussianBlur(square_img, filtered, Size(5, 5), 1);
 
+    // Canny edge detector
     Canny(filtered, edges, 200, 50);
+    
+    // Creation of the new image with channels: S, V, Canny
     Mat output(square_img.size(), CV_8UC3);
     vector<Mat> chan;
     split(square_img, channels);
@@ -57,61 +68,72 @@ Mat BoatDetector::image_preprocessing() {
     chan.push_back(edges);
     merge(chan, output);
 
-    resize(square_img, square_img, net_dim);
-
-    processed_img = square_img;
+    // Resize of the image according to the network input shape
+    resize(square_img, processed_img, net_dim);
+    
     return processed_img;
 }
 
 Mat BoatDetector::mask_preprocessing(const String& path_label){
+    /// Mask preprocessing: from the txt file path containing the vertex indexes, 
+    ///it determines the 0-1 associated mask 
+    
+    // Check that the file exists, otherwise send an error
     bool file_exists = access(path_label.c_str(), 0) == 0;
-
     if (!file_exists){
         cerr << "Mask file not existing for mask: " << path_label;
         exit(1);
     }
 
+    // Open the corresponding txt file
     String x;
     ifstream inFile;
     inFile.open(path_label);
-
     if (!inFile) {
         cerr << "Unable to open file datafile.txt";
         exit(1);
     }
 
+    // Read each file line independently and extract the coordinates
     while (inFile >> x) {
         vector<String> coordinates = split_line(x, ':');
         coordinates = split_line(coordinates[1], ';');
-
+        
+        // Determine the associated points
         Point p1(stoi(coordinates[0]), stoi(coordinates[2]));
         Point p2(stoi(coordinates[0]), stoi(coordinates[3]));
         Point p3(stoi(coordinates[1]), stoi(coordinates[3]));
         Point p4(stoi(coordinates[1]), stoi(coordinates[2]));
-
         vector<vector<Point>> pts = {{p1, p2, p3, p4}};
+    
+        // Create the rectangle on the mask
         fillPoly(mask, pts, Scalar(255));
     }
 
     inFile.close();
 
+    // Pad the mask to make it square
+    Mat square_mask = Mat(Size(init_dim_max, init_dim_max), CV_8UC1);
     int top, bottom, left, right;
     extract_squared_padding(init_dim, init_dim_max, top, bottom, left, right);
-
-    Mat square_mask = Mat(Size(init_dim_max, init_dim_max), CV_8UC1);
-
     copyMakeBorder(mask, square_mask, top, bottom, left, right, BORDER_CONSTANT, Scalar(0));
+    
+    // Resize of the image according to the network input shape
     resize(square_mask, mask, net_dim);
 
     return mask;
 }
 
 void BoatDetector::make_prediction(dnn::Net& net) {
-
+    /// Making of the mask prediction thanks to the input neural network for the current image
+    
+    // Extraction of the layers name (to check that the loading has been done correctly)
     auto layers = net.getLayerNames();
 //    for (auto layer : layers)
 //        cout << layer << endl;
 
+    // Parameters for the blob extraction (during training, the pixel values 
+    // have been divided by 255
     int sz[] = {1, net_dim.height, net_dim.width, 3};
     vector<float> mean;
     mean.push_back(1.0/127.5);
@@ -121,11 +143,15 @@ void BoatDetector::make_prediction(dnn::Net& net) {
     Mat blob(4, sz, CV_32F, processed_img.data);
     vector<Mat> output_img;
 
+    // Blob extraction
     dnn::blobFromImage(processed_img, blob, scale, net_dim, 1.0/127.5);
+    
+    // Set input to the network and forward it to obtain the prediction  
     net.setInput(blob);
     auto output = net.forward();
+    
+    // Extract the image correspondent to the prediction (one for each input image)
     dnn::imagesFromBlob(output, output_img);
-
     output_img[0].copyTo(net_output);
 
     imshow("Prediction", net_output);
@@ -133,9 +159,13 @@ void BoatDetector::make_prediction(dnn::Net& net) {
 }
 
 void BoatDetector::prediction_processing() {
+    /// Processing of the predicted mask: 0-255 mask is obtained through thresholding
+    /// and since rectangular boxes are present in the ground-truth masks, correspondent
+    /// contours and rectangular shapes are extracted
 
     Mat final_mask (net_dim, CV_8UC1);
 
+    // Prediction thresholding (and back to 0-255 mask)
     for (int j=0; j<net_output.size().width; j++)
         for (int k=0; k<net_output.size().height; k++)
             if (net_output.at<float>(k, j) < 0.99)
@@ -146,18 +176,22 @@ void BoatDetector::prediction_processing() {
     imshow("thresholded mask", final_mask);
     waitKey(0);
 
+    // Canny edge extraction 
     Mat canny_output;
     Canny(final_mask, canny_output, 200, 400);
 
+    // Extraction of the contours in the mask
     findContours(canny_output, contours, RETR_TREE, CHAIN_APPROX_SIMPLE);
-
     vector<vector<Point> > contours_poly(contours.size());
     vector<Rect> boundRect(contours.size());
+    
+    // Analysis of each contour and determination of its rectangular bound
     for(size_t i = 0; i < contours.size(); i++){
         approxPolyDP(contours[i],contours_poly[i],3,true);
         boundRect[i] = boundingRect(contours_poly[i]);
     }
 
+    // Drawing of the rectangular bound on the mask (it is completely filled)
     Scalar color = Scalar(rng.uniform(0, 256), rng.uniform(0,256), rng.uniform(0,256));
     for(size_t i = 0; i< contours.size(); i++){
         drawContours(predicted_mask, contours_poly, (int)i, color);
@@ -169,17 +203,19 @@ void BoatDetector::prediction_processing() {
 }
 
 void BoatDetector::apply_prediction_to_input(){
-
+    /// Application of the prediction to the input image to make it visualizable by the user
+    
+    // Inverse padding operation to come to the original shape and size
+    Mat initial_dim_predicted_mask;
     int top, bottom, left, right;
     extract_squared_padding(init_dim, init_dim_max, top, bottom, left, right);
-
-    Mat initial_dim_predicted_mask;
     resize(predicted_mask, initial_dim_predicted_mask, Size(init_dim_max, init_dim_max));
     initial_dim_predicted_mask = initial_dim_predicted_mask(Range(top, init_dim_max-bottom), Range(left, init_dim_max-right));
 
     imshow("initial_dim_predicted_mask", initial_dim_predicted_mask);
     waitKey(0);
 
+    // Expansion of the mask in both the 3 input channels (BGR)
     vector<Mat> three;
     three.push_back(initial_dim_predicted_mask);
     three.push_back(initial_dim_predicted_mask);
@@ -187,6 +223,7 @@ void BoatDetector::apply_prediction_to_input(){
     Mat three_channels_initial_dim_predicted_mask;
     merge(three, three_channels_initial_dim_predicted_mask);
 
+    // Application of the mask
     Mat img_masked = img.clone();
     bitwise_and(img, three_channels_initial_dim_predicted_mask, img_masked);
 
