@@ -107,19 +107,27 @@ Mat BoatDetector::mask_preprocessing(const String& path_label){
 void BoatDetector::make_prediction(dnn::Net& net) {
 
     auto layers = net.getLayerNames();
-    for (auto layer : layers)
-        cout << layer << endl;
+//    for (auto layer : layers)
+//        cout << layer << endl;
 
     int sz[] = {1, net_dim.height, net_dim.width, 3};
+    vector<float> mean;
+    mean.push_back(1.0/127.5);
+    mean.push_back(1.0/127.5);
+    mean.push_back(1.0/127.5);
+    float scale = 1/127.5;
     Mat blob(4, sz, CV_32F, processed_img.data);
     vector<Mat> output_img;
 
-    dnn::blobFromImage(processed_img, blob, 1.0, net_dim, 0);
+    dnn::blobFromImage(processed_img, blob, scale, net_dim, 1.0/127.5);
     net.setInput(blob);
     auto output = net.forward();
     dnn::imagesFromBlob(output, output_img);
 
     output_img[0].copyTo(net_output);
+
+    imshow("Prediction", net_output);
+    waitKey(0);
 }
 
 void BoatDetector::prediction_processing() {
@@ -128,14 +136,13 @@ void BoatDetector::prediction_processing() {
 
     for (int j=0; j<net_output.size().width; j++)
         for (int k=0; k<net_output.size().height; k++)
-            if (net_output.at<float>(k, j) < 0.4)
+            if (net_output.at<float>(k, j) < 0.98)
                 final_mask.at<u_char>(k, j) = 0;
             else
                 final_mask.at<u_char>(k, j) = 255;
 
-//    imshow("net_output", net_output);
-//    imshow("thresholded mask", final_mask);
-//    waitKey(0);
+    imshow("thresholded mask", final_mask);
+    waitKey(0);
 
     Mat canny_output;
     Canny(final_mask, canny_output, 200, 400);
