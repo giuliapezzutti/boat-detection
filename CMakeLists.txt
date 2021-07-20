@@ -6,7 +6,6 @@ find_package(OpenCV REQUIRED)
 
 message(${CMAKE_CURRENT_SOURCE_DIR})
 set(SOURCE_FILES
-#        src/main.cpp
         src/utilities.cpp
         src/BoatDetector.cpp
         src/application.cpp
