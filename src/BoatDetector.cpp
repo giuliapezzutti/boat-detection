@@ -4,7 +4,7 @@
 #include <opencv2/imgproc.hpp>
 #include <unistd.h>
 #include "../include/BoatDetector.h"
-#include "../include/functions.h"
+#include "../include/utilities.h"
 #include <utility>
 
 RNG rng(12345);
@@ -46,14 +46,16 @@ Mat BoatDetector::image_preprocessing() {
     merge(dest, square_img);
 
     Mat filtered, edges;
-//    GaussianBlur(square_img, filtered, Size(3, 3), 1);
+    GaussianBlur(square_img, filtered, Size(5, 5), 1);
 
-//    Canny(filtered, edges, 200, 50);
-//    Mat output(square_img.size(), CV_8UC3);
-//    vector<Mat> chan;
-//    chan.push_back(square_img);
-//    chan.push_back(edges);
-//    merge(chan, output);
+    Canny(filtered, edges, 200, 50);
+    Mat output(square_img.size(), CV_8UC3);
+    vector<Mat> chan;
+    split(square_img, channels);
+    chan.push_back(channels.at(1));
+    chan.push_back(channels.at(2));
+    chan.push_back(edges);
+    merge(chan, output);
 
     resize(square_img, square_img, net_dim);
 
@@ -136,7 +138,7 @@ void BoatDetector::prediction_processing() {
 
     for (int j=0; j<net_output.size().width; j++)
         for (int k=0; k<net_output.size().height; k++)
-            if (net_output.at<float>(k, j) < 0.98)
+            if (net_output.at<float>(k, j) < 0.99)
                 final_mask.at<u_char>(k, j) = 0;
             else
                 final_mask.at<u_char>(k, j) = 255;
@@ -159,7 +161,7 @@ void BoatDetector::prediction_processing() {
     Scalar color = Scalar(rng.uniform(0, 256), rng.uniform(0,256), rng.uniform(0,256));
     for(size_t i = 0; i< contours.size(); i++){
         drawContours(predicted_mask, contours_poly, (int)i, color);
-        rectangle(predicted_mask, boundRect[i].tl(), boundRect[i].br(), color, 1);
+        rectangle(predicted_mask, boundRect[i].tl(), boundRect[i].br(), color, -1);
     }
 
     imshow("Prediction", predicted_mask);
@@ -188,7 +190,6 @@ void BoatDetector::apply_prediction_to_input(){
     Mat img_masked = img.clone();
     bitwise_and(img, three_channels_initial_dim_predicted_mask, img_masked);
 
-    imshow("Masked image", img_masked);
+    imshow("Results", img_masked);
     waitKey(0);
-
 }

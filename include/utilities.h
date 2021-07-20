@@ -1,5 +1,5 @@
-#ifndef BOAT_DETECTION_FUNCTIONS_H
-#define BOAT_DETECTION_FUNCTIONS_H
+#ifndef BOAT_DETECTION_UTILITIES_H
+#define BOAT_DETECTION_UTILITIES_H
 
 #include <iostream>
 #include <sstream>

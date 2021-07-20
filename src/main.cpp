@@ -5,7 +5,7 @@
 #include <opencv2/imgproc.hpp>
 #include <unistd.h>
 #include <opencv2/dnn/dnn.hpp>
-#include "../include/functions.h"
+#include "../include/utilities.h"
 
 using namespace std;
 using namespace cv;
