@@ -91,4 +91,5 @@ folders must now be passed to training.py in order to perform the neural network
 python src/training.py <new images path> <new masks path>
 ```
 
-The trained network is then saved in models folder. it is possible now to run main.cpp file in prediction or evaluation modes, as presented above. 
+The trained network is then saved in models folder. it is possible now to run main.cpp file in prediction or evaluation modes, as presented above 
+(note that the re-building of the project is necessary for the correct execution!). 
