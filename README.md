@@ -50,13 +50,17 @@ to generate the dataset for the training (in particular, see the next subsection
   
   - prediction (*p*): the neural network is available and is used to predict the boat position in new data, for which the masks are not known; in this case, only the images folder path is necessary. 
   ``` 
-  ./boat-detection <images path> -e --masks=<masks path>
+  ./boat-detection <images path> -p
   ```
 
 Note that for the image input, it is possible to provide the folder path (all the .png images within it will be considered) or the path to a specific image. In addition, 
 a image is considered a mask of the other if it has the same name and belongs to the masks folder.
 
-
+To print the help string for the input, it is sufficient to execute: 
+``` 
+./boat-detection -h
+```
+  
 ### Completely replicate the execution
 
 Starting from a set of images, it is necessary to label them, generating the associated XML file containing the coordinates of
