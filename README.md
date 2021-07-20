@@ -27,6 +27,36 @@ input image and mask preprocessing and prediction processing are required and he
 
 ## How to execute
 
+For the project building it is necessary to move to the project folder and: 
+
+```
+mkdir build && cd build
+cmake ..
+make 
+```
+
+The project is thought to be execute to predict or evaluate the performances of the pre-trained network, but it can be also used 
+to generate the dataset for the training (in particular, see the next subsection). For this reason, three main types of input are accepted:
+
+  - training (*t*): the neural network is not yet available and the images and masks folder paths are passed to generate the training dataset.
+  ``` 
+  ./boat-detection <images path> -t --masks=<masks path>
+  ```
+  
+  - evaluation (*e*): the neural network is available and is tested for a dataset for which the ground truth is known; it is so necessary to provide the both the images and masks folder paths.
+  ``` 
+  ./boat-detection <images path> -e --masks=<masks path>
+  ```
+  
+  - prediction (*p*): the neural network is available and is used to predict the boat position in new data, for which the masks are not known; in this case, only the images folder path is necessary. 
+  ``` 
+  ./boat-detection <images path> -e --masks=<masks path>
+  ```
+
+Note that for the image input, it is possible to provide the folder path (all the .png images within it will be considered) or the path to a specific image. In addition, 
+a image is considered a mask of the other if it has the same name and belongs to the masks folder.
+
+
 ### Completely replicate the execution
 
 Starting from a set of images, it is necessary to label them, generating the associated XML file containing the coordinates of
