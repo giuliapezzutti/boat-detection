@@ -61,7 +61,7 @@ To print the help string for the input, it is sufficient to execute:
 ./boat-detection -h
 ```
   
-### Complete replication the execution
+### Replication of the training
 
 Starting from a set of images, it is necessary to label them, generating the associated XML file containing the coordinates of
 top-left and down-right corner (it can be done for example with the following tool: https://github.com/tzutalin/labelImg). Move 
