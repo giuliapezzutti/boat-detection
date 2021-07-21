@@ -4,7 +4,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <opencv2/dnn/dnn.hpp>
-#include "../include/utilities.h"
+#include "../include/utilities-functions.h"
 #include "../include/BoatDetector.h"
 
 using namespace std;
@@ -19,9 +19,15 @@ int main(int argc, char** argv) {
 
     // Check if the passed image paths correspond to a .png file or a folder: in the latter, extract all .png files path
     vector<String> img_paths;
-    if (input_imgs.substr(input_imgs.size() - 4) != ".png") {
+    if (input_imgs.substr(input_imgs.size() - 4) != ".png" or input_imgs.substr(input_imgs.size() - 4) != ".jpg") {
         folder_images = input_imgs;
-        glob(folder_images + "/*.png", img_paths);
+        vector<String> x;
+        glob(folder_images + "/*.png", x);
+        for (auto path : x)
+            img_paths.push_back(path);
+        glob(folder_images + "/*.jpg", x);
+        for (auto path : x)
+            img_paths.push_back(path);
     }
     else {
         img_paths.push_back(input_imgs);
@@ -51,6 +57,12 @@ int main(int argc, char** argv) {
         String model_path = "models/model.pb";
         net = dnn::readNetFromTensorflow(model_path);
     }
+    // Extraction of the layers name (to check that the loading has been done correctly)
+    auto layers = net.getLayerNames();
+//    for (auto layer : layers)
+//        cout << layer << endl;
+
+    vector<float> iou_vector;
 
     // Cycle over each image path found (eventually only one)
     for (const auto& path : img_paths){
@@ -58,6 +70,7 @@ int main(int argc, char** argv) {
         // Extract the correspondent image
         string name_image = extract_name_from_path(path);
         Mat img = imread(path);
+        cout << "\nAnalyzing image " << name_image << "..." << endl;
 
         // Create an instance of BoatDetector class
         BoatDetector bd = BoatDetector(img, name_image, Size(224, 224));
@@ -83,7 +96,18 @@ int main(int argc, char** argv) {
             bd.make_prediction(net);
             bd.prediction_processing();
             bd.apply_prediction_to_input();
+            iou_vector.push_back(bd.prediction_evaluation());
         }
     }
+
+    // Compute the mean value of IoU metric and print it
+    if (eval) {
+        float mean_iou = 0;
+        for (auto iou : iou_vector)
+            mean_iou += iou;
+        mean_iou = mean_iou / iou_vector.size();
+
+        cout << "\nMean IoU value for the entire set of images: " << mean_iou << endl;
+    }
+    return 0;
 }
-#pragma clang diagnostic pop

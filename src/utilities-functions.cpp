@@ -103,7 +103,7 @@ string extract_folder_from_path (const string& path){
     return folder;
 }
 
-void extract_squared_padding(const Size& current_dim, int desired_dim, int& top, int& bottom , int& left, int& right){
+void extract_squared_padding(Size current_dim, int desired_dim, int& top, int& bottom , int& left, int& right){
     /// Extraction of the necessary width and height padding in order to make the current_dim squared at desired_dim
     /// Note that the padding is performed in a symmetric way, putting so the image in the center of the square one
     top = 0, bottom = 0, left = 0, right = 0;

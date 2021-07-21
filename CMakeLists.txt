@@ -6,9 +6,9 @@ find_package(OpenCV REQUIRED)
 
 message(${CMAKE_CURRENT_SOURCE_DIR})
 set(SOURCE_FILES
-        src/utilities.cpp
+        src/main.cpp
         src/BoatDetector.cpp
-        src/application.cpp
+        src/utilities-functions.cpp
         )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})

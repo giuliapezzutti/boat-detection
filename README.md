@@ -15,13 +15,14 @@ input image and mask preprocessing and prediction processing are required and he
 
 ## Project Structure
 
-  - Data folder can include the data used for the analysis. It is not necessary since the input folders path are passed as input.
-  - Include folder contains the .h files related to the implemented c++ code.
-  - Model folder includes the .pb file where the trained neural network has been saved.
-  - Src folder contains all the implemented code. In particular:
+- Data folder can include the data used for the analysis. It is not necessary since the input folders path are passed as input.
+- Include folder contains the .h files related to the implemented c++ code.
+- Model folder includes the .pb file where the trained neural network has been saved.
+- Src folder contains all the implemented c++ code. In particular:
     + main.cpp is the application of the BoatDetector class;
-    + BoatDetector.cpp is the class containing members and methods for the boat detection computation;
-    + utilities.cpp contains a set of functions useful for the computation;
+    + BoatDetector.cpp is the class containing members and methods for the boat-detection computation;
+    + utilities.cpp contains a set of functions useful for the computation. 
+- Src-python, instead, contains the implemented Python code:
     + training.py is the Python file necessary for the training of the neural network;
     + xml_to_txt.py is the Python script to convert XML files associated to the image labelling to txt ones.
 

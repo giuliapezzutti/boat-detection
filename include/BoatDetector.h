@@ -22,6 +22,7 @@ public:
     void make_prediction(dnn::Net& net);
     void prediction_processing();
     void apply_prediction_to_input();
+    float prediction_evaluation();
 
 protected:
     Mat img;

@@ -4,7 +4,7 @@
 #include <opencv2/imgproc.hpp>
 #include <unistd.h>
 #include "../include/BoatDetector.h"
-#include "../include/utilities.h"
+#include "../include/utilities-functions.h"
 #include <utility>
 
 RNG rng(12345);
@@ -126,14 +126,8 @@ Mat BoatDetector::mask_preprocessing(const String& path_label){
 
 void BoatDetector::make_prediction(dnn::Net& net) {
     /// Making of the mask prediction thanks to the input neural network for the current image
-    
-    // Extraction of the layers name (to check that the loading has been done correctly)
-    auto layers = net.getLayerNames();
-//    for (auto layer : layers)
-//        cout << layer << endl;
 
-    // Parameters for the blob extraction (during training, the pixel values 
-    // have been divided by 255
+    // Parameters for the blob extraction (during training, the pixel values have been divided by 255
     int sz[] = {1, net_dim.height, net_dim.width, 3};
     vector<float> mean;
     mean.push_back(1.0/127.5);
@@ -229,4 +223,23 @@ void BoatDetector::apply_prediction_to_input(){
 
     imshow("Results", img_masked);
     waitKey(0);
+}
+
+float BoatDetector::prediction_evaluation(){
+    /// Evaluation of the prediction with respect to the known ground truth thanks to Intersection over Union metric
+
+    // computation of intersection and union
+    Mat intersection_mask, union_mask;
+    bitwise_and(mask, predicted_mask, intersection_mask);
+    bitwise_or(mask, predicted_mask, union_mask);
+
+    // Count of the number of elements in each computed mask
+    int count_int = countNonZero(intersection_mask);
+    int count_uni = countNonZero(union_mask);
+
+    // Calculation of the distance by definition
+    float iou = (float)count_int/(float)count_uni;
+    cout << "Intersection over union for the current prediction: " << iou << endl;
+
+    return iou;
 }
