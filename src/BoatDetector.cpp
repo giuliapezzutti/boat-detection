@@ -20,11 +20,10 @@ BoatDetector::BoatDetector(Mat input_img, String img_name, Size dim){
     
     processed_img = Mat(net_dim, CV_32FC4, Scalar(0));
     mask = Mat(init_dim, CV_8UC1, Scalar(0));
-    predicted_mask = Mat(net_dim, CV_8UC1, Scalar(0));
     net_output = Mat(net_dim, CV_32FC1, Scalar(0));
-    
+    predicted_mask = Mat(net_dim, CV_8UC1, Scalar(0));
+
     contours = vector<vector<Point>>();
-    hierarchy = vector<Vec4i>();
 }
 
 Mat BoatDetector::image_preprocessing() {
@@ -167,8 +166,8 @@ void BoatDetector::prediction_processing() {
             else
                 final_mask.at<u_char>(k, j) = 255;
 
-    imshow("thresholded mask", final_mask);
-    waitKey(0);
+//    imshow("thresholded mask", final_mask);
+//    waitKey(0);
 
     // Canny edge extraction 
     Mat canny_output;
@@ -176,7 +175,7 @@ void BoatDetector::prediction_processing() {
 
     // Extraction of the contours in the mask
     findContours(canny_output, contours, RETR_TREE, CHAIN_APPROX_SIMPLE);
-    vector<vector<Point> > contours_poly(contours.size());
+    vector<vector<Point>> contours_poly(contours.size());
     vector<Rect> boundRect(contours.size());
     
     // Analysis of each contour and determination of its rectangular bound
@@ -191,14 +190,14 @@ void BoatDetector::prediction_processing() {
         drawContours(predicted_mask, contours_poly, (int)i, color);
         rectangle(predicted_mask, boundRect[i].tl(), boundRect[i].br(), color, -1);
     }
-
-    imshow("Prediction", predicted_mask);
-    waitKey(0);
 }
 
 void BoatDetector::apply_prediction_to_input(){
     /// Application of the prediction to the input image to make it visualizable by the user
-    
+
+    imshow("Predicted mask", predicted_mask);
+    waitKey(0);
+
     // Inverse padding operation to come to the original shape and size
     Mat initial_dim_predicted_mask;
     int top, bottom, left, right;
@@ -206,22 +205,26 @@ void BoatDetector::apply_prediction_to_input(){
     resize(predicted_mask, initial_dim_predicted_mask, Size(init_dim_max, init_dim_max));
     initial_dim_predicted_mask = initial_dim_predicted_mask(Range(top, init_dim_max-bottom), Range(left, init_dim_max-right));
 
-    imshow("initial_dim_predicted_mask", initial_dim_predicted_mask);
-    waitKey(0);
+    vector<vector<Point>> cnt;
+    findContours(initial_dim_predicted_mask, cnt, RETR_LIST, CHAIN_APPROX_NONE);
+    vector<vector<Point>> contours_poly(cnt.size());
+    vector<Rect> boundRect(cnt.size());
+    Scalar color = Scalar(rng.uniform(0, 256), rng.uniform(0,256), rng.uniform(0,256));
+    Mat predicted_img = img.clone();
 
-    // Expansion of the mask in both the 3 input channels (BGR)
-    vector<Mat> three;
-    three.push_back(initial_dim_predicted_mask);
-    three.push_back(initial_dim_predicted_mask);
-    three.push_back(initial_dim_predicted_mask);
-    Mat three_channels_initial_dim_predicted_mask;
-    merge(three, three_channels_initial_dim_predicted_mask);
+//    // Analysis of each contour and determination of its rectangular bound
+//    for(size_t i = 0; i < cnt.size(); i++){
+//        approxPolyDP(cnt[i],contours_poly[i],3,true);
+//        boundRect[i] = boundingRect(contours_poly[i]);
+//    }
+//
+//    for(size_t i = 0; i< cnt.size(); i++){
+//        drawContours(predicted_img, cnt[i], (int)i, color);
+//    }
 
-    // Application of the mask
-    Mat img_masked = img.clone();
-    bitwise_and(img, three_channels_initial_dim_predicted_mask, img_masked);
+    drawContours(predicted_img, cnt, -1, color, 3);
 
-    imshow("Results", img_masked);
+    imshow("Predicted image", predicted_img);
     waitKey(0);
 }
 

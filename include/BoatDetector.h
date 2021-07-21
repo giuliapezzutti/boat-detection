@@ -35,7 +35,6 @@ protected:
     Mat predicted_mask;
     Mat net_output;
     vector<vector<Point>> contours;
-    vector<Vec4i> hierarchy;
 };
 
 #endif
