@@ -41,12 +41,12 @@ to generate the dataset for the training (in particular, see the next subsection
 
   - training (*t*): the neural network is not yet available and the images and masks folder paths are passed to generate the training dataset.
   ``` 
-  ./boat-detection <images path> -t --masks=<masks path>
+  ./boat-detection <images path> -t --masks=<txt masks path>
   ```
   
   - evaluation (*e*): the neural network is available and is tested for a dataset for which the ground truth is known; it is so necessary to provide the both the images and masks folder paths.
   ``` 
-  ./boat-detection <images path> -e --masks=<masks path>
+  ./boat-detection <images path> -e --masks=<txt masks path>
   ```
   
   - prediction (*p*): the neural network is available and is used to predict the boat position in new data, for which the masks are not known; in this case, only the images folder path is necessary. 
@@ -70,7 +70,7 @@ now to the project folder.
 The XML files must then be converted into txt with the execution of xml_to_txt.py:
 
 ```
-python src/utilities/xml_to_txt.py
+python src-python/xml_to_txt.py
 ```
 
 Note that eventual images containing no boats will not have the correspondent txt file. If you want to consider them in the dataset,
@@ -82,14 +82,14 @@ Subsequently, it is necessary to create the whole pre-processed dataset. To do t
 mkdir build && cd build
 cmake ..
 make 
-./boat-detection <images path> -t --masks=<masks path>
+./boat-detection <images path> -t --masks=<txt masks path>
 ```
 
 Two new folders, respectively inside the images path and masks path, will be created with the correspondent saved files. The path to these 
 folders must now be passed to training.py in order to perform the neural network training. 
 
 ```
-python src/training.py <new images path> <new masks path>
+python src-python/training.py <new images path> <new masks path>
 ```
 
 The trained network is then saved in models folder. it is possible now to run main.cpp file in prediction or evaluation modes, as presented above 
