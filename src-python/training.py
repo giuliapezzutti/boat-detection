@@ -72,7 +72,7 @@ if __name__ == '__main__':
     callbacks = [tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5),
                  keras.callbacks.ModelCheckpoint("../models/model-checkpoint.h5", save_best_only=True)]
     batch_size = 64
-    num_epochs = 20
+    num_epochs = 10
 
     # Creation of the model
     model = CNN(input_shape)
