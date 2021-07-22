@@ -38,7 +38,7 @@ Mat BoatDetector::image_preprocessing() {
     copyMakeBorder(img, square_img, top, bottom, left, right, BORDER_CONSTANT, Scalar(0));
 
     // Converto to HSV colour space
-    cvtColor(square_img, square_img, COLOR_BGR2GRAY);
+    cvtColor(square_img, square_img, COLOR_BGR2HSV);
 
     // Equalize histograms for each channels thanks to CLAHE
     vector<Mat> channels, dest;
