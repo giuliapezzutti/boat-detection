@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
         cout << "\nAnalyzing image " << name_image << "..." << endl;
 
         // Create an instance of BoatDetector class
-        BoatDetector bd = BoatDetector(img, name_image, Size(224, 224));
+        BoatDetector bd = BoatDetector(img, name_image, Size(512, 512));
 
         // Perform image preprocessing and, if needed, mask preprocessing
         Mat processed_img = bd.image_preprocessing();
