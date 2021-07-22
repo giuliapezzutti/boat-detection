@@ -64,6 +64,8 @@ int main(int argc, char** argv) {
 
     vector<float> iou_vector;
 
+    cout << "To go to the subsequent image analysis, press any key after the prediction is shown!" << endl;
+
     // Cycle over each image path found (eventually only one)
     for (const auto& path : img_paths){
 
@@ -98,6 +100,9 @@ int main(int argc, char** argv) {
             bd.apply_prediction_to_input();
             iou_vector.push_back(bd.prediction_evaluation());
         }
+
+        waitKey(0);
+        destroyAllWindows();
     }
 
     // Compute the mean value of IoU metric and print it
