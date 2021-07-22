@@ -28,41 +28,39 @@ BoatDetector::BoatDetector(Mat input_img, String img_name, Size dim){
 
 Mat BoatDetector::image_preprocessing() {
     /// Image preprocessing done at different steps
-
     Mat square_img = Mat(Size(init_dim_max, init_dim_max), CV_32FC4);
-    Mat filtered, edges, laplacian;
+    Mat filtered, edges;
     int top, bottom, left, right;
-
     // Padding to create a square matrix
     extract_squared_padding(init_dim, init_dim_max, top, bottom, left, right);
     copyMakeBorder(img, square_img, top, bottom, left, right, BORDER_CONSTANT, Scalar(0));
 
     // Converto to HSV colour space
-    Mat square_img_one;
-    cvtColor(square_img, square_img_one, COLOR_BGR2GRAY);
-
+    cvtColor(square_img, square_img, COLOR_BGR2HSV);
     // Equalize histograms for each channels thanks to CLAHE
+    vector<Mat> channels, dest;
+    split(square_img, channels);
     Ptr<CLAHE> clahe = createCLAHE();
     clahe->setClipLimit(4);
-    clahe->apply(square_img_one, square_img_one);
-
-    // Noise removal through Gaussian filtering
-    GaussianBlur(square_img_one, square_img_one, Size(3, 3), 0.1);
-
+    for(auto & channel : channels) {
+        Mat out;
+        clahe->apply(channel, out);
+        dest.push_back(out);
+    }
+    merge(dest, square_img);
+    // Noise removal throught Gaussian filtering
+    GaussianBlur(square_img, filtered, Size(5, 5), 1);
     // Canny edge detector
-    Canny(square_img_one, edges, 200, 50);
-    Laplacian(square_img_one, laplacian, CV_8UC1);
+    Canny(filtered, edges, 200, 50);
 
     // Creation of the new image with channels: S, V, Canny
     Mat output(square_img.size(), CV_8UC3);
     vector<Mat> chan;
-    chan.push_back(square_img_one);
+    split(square_img, channels);
+    chan.push_back(channels.at(1));
+    chan.push_back(channels.at(2));
     chan.push_back(edges);
-    chan.push_back(laplacian);
     merge(chan, output);
-
-//    erode(output, output, Mat());
-
     // Resize of the image according to the network input shape
     resize(output, processed_img, net_dim);
 
