@@ -24,7 +24,7 @@ def CNN(in_shape):
     X = tf.keras.layers.BatchNormalization(axis=-1, name='bn3')(X)
     X = tf.keras.layers.Activation('relu')(X)
 
-    X = tf.keras.layers.Conv2D(filters=1, kernel_size=(3, 3), strides=(1, 1), padding='same', ame='conv4')(X)
+    X = tf.keras.layers.Conv2D(filters=1, kernel_size=(3, 3), strides=(1, 1), padding='same', name='conv4')(X)
     X = tf.keras.layers.Activation('sigmoid')(X)
     m = tf.keras.Model(inputs=X_input, outputs=X)
 
