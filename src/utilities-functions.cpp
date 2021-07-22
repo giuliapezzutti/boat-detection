@@ -14,9 +14,9 @@ void init(int argc, char *argv[], String &images_path, bool &train, bool &eval, 
     // String with all the possibilities of input for the eventual help
     const String keys =
             "{help h usage ? |<none>| Print help message}"
-            "{training t     |      | Generate a set of pre-processed images for the neural network training}"
-            "{evaluation e   |      | Evaluate the neural network with respect to one or more images with known mask}"
-            "{predict p      |      | Predict one or more images thanks to the neural network}"
+            "{training t T   |      | Generate a set of pre-processed images for the neural network training}"
+            "{evaluation e E |      | Evaluate the neural network with respect to one or more images with known mask}"
+            "{predict p P    |      | Predict one or more images thanks to the neural network}"
             "{@images        |      | Input images path}"
             "{masks folder   |      | Input masks path}";
 
