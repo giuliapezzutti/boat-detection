@@ -48,4 +48,20 @@ src = os.getcwd() + '/' + labels_txt
 dst = working_dir + '/' + labels_txt
 os.rename(src, dst)
 
+images_dir = input('Insert the folder path containing the set of images: ')
+os.chdir(images_dir)
+images_paths = []
+for file in glob.glob("*.png"):
+    images_paths.append(file)
+images_paths = sorted(images_paths)
+
+os.chdir(os.getcwd())
+os.chdir(labels_dir_name)
+for image in images_paths:
+    name = image[0:9]
+    if not os.path.isfile(name+'.txt'):
+        with open(name+'.txt', 'w') as f:
+            pass
+
 print(labels_dir_name + '.txt is ready!')
+

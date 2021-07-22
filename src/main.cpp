@@ -56,15 +56,16 @@ int main(int argc, char** argv) {
     if (eval or pred){
         String model_path = "models/model.pb";
         net = dnn::readNetFromTensorflow(model_path);
+
+        // Extraction of the layers name (to check that the loading has been done correctly)
+        auto layers = net.getLayerNames();
+//        for (auto layer : layers)
+//            cout << layer << endl;
+
+        cout << "To go to the subsequent image analysis, press any key after the prediction is shown!" << endl;
     }
-    // Extraction of the layers name (to check that the loading has been done correctly)
-    auto layers = net.getLayerNames();
-//    for (auto layer : layers)
-//        cout << layer << endl;
 
     vector<float> iou_vector;
-
-    cout << "To go to the subsequent image analysis, press any key after the prediction is shown!" << endl;
 
     // Cycle over each image path found (eventually only one)
     for (const auto& path : img_paths){
@@ -91,6 +92,7 @@ int main(int argc, char** argv) {
             imwrite(img_save, processed_img);
             String mask_save = mask_save_path + "/" + name_image + "_mask.png";
             imwrite(mask_save, mask);
+            cout << "Pre-processed image and mask saved!" << endl;
         }
 
         // If network analysis is required, perform it with the functions of BoatDetector

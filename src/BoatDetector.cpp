@@ -38,39 +38,33 @@ Mat BoatDetector::image_preprocessing() {
     copyMakeBorder(img, square_img, top, bottom, left, right, BORDER_CONSTANT, Scalar(0));
 
     // Converto to HSV colour space
-    cvtColor(square_img, square_img, COLOR_BGR2HSV);
+    Mat square_img_one;
+    cvtColor(square_img, square_img_one, COLOR_BGR2GRAY);
 
     // Equalize histograms for each channels thanks to CLAHE
-    vector<Mat> channels, dest;
-    split(square_img, channels);
     Ptr<CLAHE> clahe = createCLAHE();
     clahe->setClipLimit(4);
-    for(auto & channel : channels) {
-        Mat out;
-        clahe->apply(channel, out);
-        dest.push_back(out);
-    }
-    merge(dest, square_img);
+    clahe->apply(square_img_one, square_img_one);
 
     // Noise removal through Gaussian filtering
-    GaussianBlur(square_img, filtered, Size(3, 3), 0.1);
+    GaussianBlur(square_img_one, square_img_one, Size(3, 3), 0.1);
 
     // Canny edge detector
-    Canny(filtered, edges, 200, 50);
+    Canny(square_img_one, edges, 200, 50);
+    Laplacian(square_img_one, laplacian, CV_8UC1);
 
     // Creation of the new image with channels: S, V, Canny
     Mat output(square_img.size(), CV_8UC3);
     vector<Mat> chan;
-    split(filtered, channels);
-    chan.push_back(channels.at(0));
-    chan.push_back(channels.at(1));
+    chan.push_back(square_img_one);
     chan.push_back(edges);
+    chan.push_back(laplacian);
     merge(chan, output);
 
 //    erode(output, output, Mat());
 
     // Resize of the image according to the network input shape
-    resize(filtered, processed_img, net_dim);
+    resize(output, processed_img, net_dim);
 
     return processed_img;
 }
