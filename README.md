@@ -39,7 +39,7 @@ make
 The project is thought to be execute to predict or evaluate the performances of the pre-trained network, but it can be also used 
 to generate the dataset for the training (in particular, see the next subsection). For this reason, three main types of input are accepted:
 
-  - training (*t*): the neural network is not yet available and the images and masks folder paths are passed to generate the training dataset.
+  - training (*t*): the neural network is not yet available and the images and masks folder paths are passed to generate the training dataset. The generated images are saved in 'training_images' created inside <images path> and masks are saved inside 'images_masks' created inside <txt masks path>
   ``` 
   ./boat-detection <images path> -t --masks=<txt masks path>
   ```
