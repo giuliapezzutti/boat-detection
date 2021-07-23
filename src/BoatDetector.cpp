@@ -146,7 +146,7 @@ void BoatDetector::make_prediction(dnn::Net& net) {
     dnn::imagesFromBlob(output, output_img);
     output_img[0].copyTo(net_output);
 
-    imshow("Prediction", net_output);
+    // imshow("Prediction", net_output);
 }
 
 void BoatDetector::prediction_processing() {
