@@ -54,14 +54,17 @@ to generate the dataset for the training (in particular, see the next subsection
   ./boat-detection <images path> -p
   ```
 
-Note that for the image input, it is possible to provide the folder path (all the .png images within it will be considered) or the path to a specific image. In addition, 
-a image is considered a mask of the other if it has the same name and belongs to the masks folder.
+Note that for the image input, it is possible to provide the folder path (all the .png and .jpg images within it will be considered) or the path to a specific image (in .png
+or .jpg format). In addition, a image is considered a mask of the other if it has the same name and belongs to the masks folder.
 
 To print the help string for the input, it is sufficient to execute: 
 ``` 
 ./boat-detection -h
 ```
   
+Note that if the program is executed with an IDE as CLion, it is necessary to set as working 'src' folder and provide the eventual relative paths with respect to that, 
+otherwise the model cannot be correctly loaded.
+
 ### Replication of the training
 
 Starting from a set of images, it is necessary to label them, generating the associated XML file containing the coordinates of

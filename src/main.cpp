@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
 
     // Check if the passed image paths correspond to a .png file or a folder: in the latter, extract all .png files path
     vector<String> img_paths;
-    if (input_imgs.substr(input_imgs.size() - 4) != ".png" or input_imgs.substr(input_imgs.size() - 4) != ".jpg") {
+    if (input_imgs.substr(input_imgs.size() - 4) != ".png" and input_imgs.substr(input_imgs.size() - 4) != ".jpg") {
         folder_images = input_imgs;
         if (opendir(folder_images.c_str()) == nullptr) {
             cerr << "Images folder not existing!" << endl;
