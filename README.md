@@ -15,7 +15,7 @@ input image and mask preprocessing and prediction processing are required and he
 
 ## Project Structure
 
-- Data folder can include the data used for the analysis. It is not necessary since the input folders path are passed as input.
+- Data folder can include the data used for the analysis. It is not necessary since the input folders path are passed as input. For simplicity, the test set have been provided.
 - Include folder contains the .h files related to the implemented c++ code.
 - Model folder includes the .pb file where the trained neural network has been saved.
 - Src folder contains all the implemented c++ code. In particular:
@@ -55,7 +55,12 @@ to generate the dataset for the training (in particular, see the next subsection
   ```
 
 Note that for the image input, it is possible to provide the folder path (all the .png and .jpg images within it will be considered) or the path to a specific image (in .png
-or .jpg format). In addition, a image is considered a mask of the other if it has the same name and belongs to the masks folder.
+or .jpg format). In addition, a image is considered a mask of the other if it has the same name and belongs to the masks folder. An example with the provided test set 
+is the following: 
+
+```
+./boat-detection "../data/TEST_DATASET/kaggle/" -e --masks="../data/TEST_DATASET/kaggle_labels_txt"
+```
 
 To print the help string for the input, it is sufficient to execute: 
 ``` 
