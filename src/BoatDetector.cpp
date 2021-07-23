@@ -28,6 +28,7 @@ BoatDetector::BoatDetector(Mat input_img, String img_name, Size dim){
 
 Mat BoatDetector::image_preprocessing() {
     /// Image preprocessing done at different steps
+
     Mat square_img = Mat(Size(init_dim_max, init_dim_max), CV_32FC4);
     Mat filtered, edges;
     int top, bottom, left, right;
@@ -37,6 +38,7 @@ Mat BoatDetector::image_preprocessing() {
 
     // Converto to HSV colour space
     cvtColor(square_img, square_img, COLOR_BGR2HSV);
+
     // Equalize histograms for each channels thanks to CLAHE
     vector<Mat> channels, dest;
     split(square_img, channels);
@@ -48,8 +50,10 @@ Mat BoatDetector::image_preprocessing() {
         dest.push_back(out);
     }
     merge(dest, square_img);
+
     // Noise removal throught Gaussian filtering
     GaussianBlur(square_img, filtered, Size(5, 5), 1);
+
     // Canny edge detector
     Canny(filtered, edges, 200, 50);
 
@@ -61,8 +65,9 @@ Mat BoatDetector::image_preprocessing() {
     chan.push_back(channels.at(2));
     chan.push_back(edges);
     merge(chan, output);
+
     // Resize of the image according to the network input shape
-    resize(output, processed_img, net_dim);
+    resize(filtered, processed_img, net_dim);
 
     return processed_img;
 }
@@ -154,7 +159,7 @@ void BoatDetector::prediction_processing() {
     // Prediction thresholding (and back to 0-255 mask)
     for (int j=0; j<net_output.size().width; j++)
         for (int k=0; k<net_output.size().height; k++)
-            if (net_output.at<float>(k, j) < 0.99)
+            if (net_output.at<float>(k, j) < 0.95)
                 final_mask.at<u_char>(k, j) = 0;
             else
                 final_mask.at<u_char>(k, j) = 255;
@@ -180,6 +185,7 @@ void BoatDetector::prediction_processing() {
         drawContours(predicted_mask, contours_poly, (int)i, color);
         rectangle(predicted_mask, boundRect[i].tl(), boundRect[i].br(), color, -1);
     }
+
 }
 
 void BoatDetector::apply_prediction_to_input(){
