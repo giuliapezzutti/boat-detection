@@ -17,10 +17,17 @@ int main(int argc, char** argv) {
     bool train, eval, pred;
     init(argc, argv, input_imgs, train, eval, pred, folder_masks);
 
+    // ----------------------------------------------------------------------------------------------------------------
+    // CHECK OF THE INPUT VALUES
+
     // Check if the passed image paths correspond to a .png file or a folder: in the latter, extract all .png files path
     vector<String> img_paths;
     if (input_imgs.substr(input_imgs.size() - 4) != ".png" or input_imgs.substr(input_imgs.size() - 4) != ".jpg") {
         folder_images = input_imgs;
+        if (opendir(folder_images.c_str()) == nullptr) {
+            cerr << "Images folder not existing!" << endl;
+            exit(1);
+        }
         vector<String> x;
         glob(folder_images + "/*.png", x);
         for (auto path : x)
@@ -39,6 +46,16 @@ int main(int argc, char** argv) {
         cerr << "The folder must contain at least one image!";
         exit(1);
     }
+
+    // Check that the masks folder exists
+    if (train or eval)
+        if (opendir(folder_masks.c_str()) == nullptr) {
+            cerr << "Masks folder not existing!" << endl;
+            exit(1);
+        }
+
+    // ----------------------------------------------------------------------------------------------------------------
+    // CREATION AND LOADING OF NECESSARY VARIABLES
 
     // If training task, create the directories to save the image and mask datasets
     String save_path = folder_images + "/training_images";
@@ -66,6 +83,9 @@ int main(int argc, char** argv) {
     }
 
     vector<float> iou_vector;
+
+    // ----------------------------------------------------------------------------------------------------------------
+    // ANALYSIS OF EACH IMAGE WITH BOATDETECTOR CLASS
 
     // Cycle over each image path found (eventually only one)
     for (const auto& path : img_paths){
