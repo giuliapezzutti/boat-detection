@@ -84,7 +84,7 @@ vector<string> split_line (const string &s, char delim){
 string extract_name_from_path (const string& path){
     /// Extraction of the file name from the entire path according to different split applications
     vector<string> split_results = split_line(path, '.');
-    string without_extension = split_results[0];
+    string without_extension = split_results[split_results.size()-2];
 
     split_results = split_line(without_extension, '/');
     string name_image = split_results[split_results.size()-1];
@@ -96,7 +96,11 @@ string extract_name_from_path (const string& path){
 string extract_folder_from_path (const string& path){
     /// Extraction of the folder name from the entire path according to different split applications
     vector<string> split_results = split_line(path, '.');
-    string without_extension = split_results[0];
+    string without_extension;
+    if (split_results.size() >= 2)
+        without_extension = split_results[split_results.size()-2];
+    else
+        without_extension = split_results[0];
 
     size_t last = without_extension.find_last_of('/');
     string folder = string(&without_extension[0], &without_extension[last+1]);

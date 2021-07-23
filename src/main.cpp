@@ -6,6 +6,7 @@
 #include <opencv2/dnn/dnn.hpp>
 #include "../include/utilities-functions.h"
 #include "../include/BoatDetector.h"
+#include <filesystem>
 
 using namespace std;
 using namespace cv;
@@ -71,7 +72,7 @@ int main(int argc, char** argv) {
     // Load of the pre-trained model thanks to dnn class
     dnn::Net net;
     if (eval or pred){
-        String model_path = "models/model.pb";
+        String model_path = "../models/model.pb";
         net = dnn::readNetFromTensorflow(model_path);
 
         // Extraction of the layers name (to check that the loading has been done correctly)
@@ -100,6 +101,7 @@ int main(int argc, char** argv) {
 
         // Perform image preprocessing and, if needed, mask preprocessing
         Mat processed_img = bd.image_preprocessing();
+
         Mat mask;
         if (train or eval) {
             String path_label = folder_masks + "/" + name_image + ".txt";
@@ -120,7 +122,9 @@ int main(int argc, char** argv) {
             bd.make_prediction(net);
             bd.prediction_processing();
             bd.apply_prediction_to_input();
-            iou_vector.push_back(bd.prediction_evaluation());
+
+            if (eval)
+                iou_vector.push_back(bd.prediction_evaluation());
         }
 
         waitKey(0);
