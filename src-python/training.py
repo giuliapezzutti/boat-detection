@@ -1,7 +1,7 @@
 import os
+import sys
 from glob import glob
 import cv2 as cv
-import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
@@ -32,10 +32,9 @@ def CNN(in_shape):
 
 
 if __name__ == '__main__':
-    
-    # TODO: To be set from the command line
-    folder = "../data/training_images/"
-    mask_folder = "../data/image_masks/"
+
+    folder = sys.argv[1]
+    mask_folder = sys.argv[2]
 
     # Extract all the file paths inside the two folders
     images_path = sorted(glob(folder + "*.png"))
@@ -57,6 +56,10 @@ if __name__ == '__main__':
         mask_resized = np.expand_dims(np.asarray(mask), -1)
         masks.append(mask_resized)
     masks = np.array(masks)
+
+    if dataset.shape[0] == 0:
+        print("You must provide a folder containing the images for the training!")
+        exit(1)
 
     # Set the shapes for the training
     input_shape = dataset[0].shape
