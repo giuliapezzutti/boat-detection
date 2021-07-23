@@ -93,4 +93,4 @@ if __name__ == '__main__':
         [tf.TensorSpec(model_input.shape, model_input.dtype) for model_input in model.inputs])
     frozen_func = convert_variables_to_constants_v2(full_model)
     frozen_func.graph.as_graph_def()
-    tf.io.write_graph(graph_or_graph_def=frozen_func.graph, logdir="../models/", name="model.pb", as_text=False)
+    tf.io.write_graph(graph_or_graph_def=frozen_func.graph, logdir="models/", name="model.pb", as_text=False)
